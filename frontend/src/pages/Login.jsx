@@ -79,7 +79,7 @@ const Login = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="your.email@example.com"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                className="w-full px-4 py-3 text-gray-900 bg-white rounded-lg border border-gray-300 placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
               />
             </div>
 
@@ -92,7 +92,7 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                className="w-full px-4 py-3 text-gray-900 bg-white rounded-lg border border-gray-300 placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
               />
             </div>
 

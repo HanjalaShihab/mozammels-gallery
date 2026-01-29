@@ -95,7 +95,7 @@ const Register = () => {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="John Doe"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                className="w-full px-4 py-3 text-gray-900 bg-white rounded-lg border border-gray-300 placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
               />
             </div>
 
@@ -108,7 +108,7 @@ const Register = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="your.email@example.com"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                className="w-full px-4 py-3 text-gray-900 bg-white rounded-lg border border-gray-300 placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
               />
             </div>
 
@@ -121,7 +121,7 @@ const Register = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                className="w-full px-4 py-3 text-gray-900 bg-white rounded-lg border border-gray-300 placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
               />
               <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
             </div>
@@ -135,7 +135,7 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                className="w-full px-4 py-3 text-gray-900 bg-white rounded-lg border border-gray-300 placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
               />
             </div>
 
