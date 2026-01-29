@@ -23,7 +23,7 @@ import {
 } from '../services/api';
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [items, setItems] = useState([]);
@@ -45,10 +45,11 @@ const AdminDashboard = () => {
 
   // Redirect if not admin
   useEffect(() => {
+    if (authLoading) return;
     if (!user || user.role !== 'admin') {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const tabs = [
     { 
@@ -100,10 +101,6 @@ const AdminDashboard = () => {
       color: 'from-yellow-500 to-amber-500'
     },
   ];
-
-  useEffect(() => {
-    loadItems();
-  }, [activeTab]);
 
   const loadItems = async () => {
     setLoading(true);
@@ -319,45 +316,22 @@ const AdminDashboard = () => {
   };
 
   const statsVariants = {
-    hidden: { scale: 0, rotate: -180 },
+    hidden: { opacity: 0 },
     visible: { 
-      scale: 1, 
-      rotate: 0,
-      transition: { type: "spring", stiffness: 200, damping: 20 }
+      opacity: 1,
+      transition: { duration: 0.3 }
     }
   };
 
   // Interactive Card Component
   const InteractiveCard = ({ children, className = '', onClick }) => {
-    const [isHovered, setIsHovered] = useState(false);
-    const [rotation, setRotation] = useState({ x: 0, y: 0 });
-
     return (
-      <motion.div
-        className={`relative perspective-1000 ${className}`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => {
-          setIsHovered(false);
-          setRotation({ x: 0, y: 0 });
-        }}
-        onMouseMove={(e) => {
-          if (!isHovered) return;
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width - 0.5;
-          const y = (e.clientY - rect.top) / rect.height - 0.5;
-          setRotation({ x: -y * 5, y: x * 5 });
-        }}
-        animate={{
-          rotateX: rotation.x,
-          rotateY: rotation.y,
-          scale: isHovered ? 1.02 : 1
-        }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        style={{ transformStyle: 'preserve-3d' }}
+      <div
+        className={`relative ${className}`}
         onClick={onClick}
       >
         {children}
-      </motion.div>
+      </div>
     );
   };
 
@@ -431,7 +405,7 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Users */}
         <InteractiveCard>
-          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 rounded-2xl p-6 border border-white/10 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-white flex items-center gap-3">
                 <Users className="text-blue-400" />
@@ -477,7 +451,7 @@ const AdminDashboard = () => {
 
         {/* Recent Contacts */}
         <InteractiveCard>
-          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 rounded-2xl p-6 border border-white/10 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-white flex items-center gap-3">
                 <Mail className="text-cyan-400" />
@@ -517,7 +491,7 @@ const AdminDashboard = () => {
 
       {/* System Status */}
       <InteractiveCard>
-        <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+        <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 rounded-2xl p-6 border border-white/10 shadow-2xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-white flex items-center gap-3">
               <Server className="text-green-400" />
@@ -537,8 +511,8 @@ const AdminDashboard = () => {
             ].map((service, index) => (
               <motion.div
                 key={service.label}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 transition={{ delay: index * 0.1 }}
                 className={`p-4 rounded-xl bg-gradient-to-br ${service.color} text-center`}
               >
@@ -568,7 +542,7 @@ const AdminDashboard = () => {
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
+              className="pl-10 pr-4 py-2 bg-white/10  border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
             />
           </div>
           <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:shadow-lg transition-shadow">
@@ -584,7 +558,7 @@ const AdminDashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-xl p-6 border border-white/10 shadow-lg"
+              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 rounded-xl p-6 border border-white/10 shadow-lg"
             >
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4 flex-1">
@@ -612,19 +586,17 @@ const AdminDashboard = () => {
                   <select
                     value={user.role}
                     onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                    className="px-4 py-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                    className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-cyan-500"
                   >
                     <option value="user" className="bg-gray-900">User</option>
                     <option value="admin" className="bg-gray-900">Admin</option>
                   </select>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                  <button
                     onClick={() => handleDelete(user._id)}
-                    className="p-2 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20"
+                    className="p-2 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20 transition-colors"
                   >
                     <Trash2 size={20} />
-                  </motion.button>
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -648,7 +620,7 @@ const AdminDashboard = () => {
             placeholder="Search messages..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
+            className="pl-10 pr-4 py-2 bg-white/10  border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
           />
         </div>
       </div>
@@ -660,7 +632,7 @@ const AdminDashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-xl p-6 border border-white/10 shadow-lg"
+              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 rounded-xl p-6 border border-white/10 shadow-lg"
             >
                 <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
@@ -685,14 +657,12 @@ const AdminDashboard = () => {
                   <span className="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-full text-xs">
                     {new Date(contact.createdAt).toLocaleDateString()}
                   </span>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                  <button
                     onClick={() => handleDelete(contact._id)}
-                    className="p-2 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20"
+                    className="p-2 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20 transition-colors"
                   >
                     <Trash2 size={20} />
-                  </motion.button>
+                  </button>
                 </div>
               </div>
               <div className="space-y-3">
@@ -740,7 +710,7 @@ const AdminDashboard = () => {
             placeholder="Search subscribers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
+            className="pl-10 pr-4 py-2 bg-white/10  border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
           />
         </div>
       </div>
@@ -752,7 +722,7 @@ const AdminDashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-xl p-6 border border-white/10 shadow-lg"
+              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 rounded-xl p-6 border border-white/10 shadow-lg"
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -768,14 +738,12 @@ const AdminDashboard = () => {
                   <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs">
                     {new Date(subscriber.createdAt).toLocaleDateString()}
                   </span>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                  <button
                     onClick={() => handleDelete(subscriber._id)}
-                    className="p-2 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20"
+                    className="p-2 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20 transition-colors"
                   >
                     <Trash2 size={20} />
-                  </motion.button>
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -800,18 +768,16 @@ const AdminDashboard = () => {
               placeholder={`Search ${activeTab}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
+              className="pl-10 pr-4 py-2 bg-white/10  border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
             />
           </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => openModal('add')}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:shadow-xl transition-shadow"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:shadow-xl transition-all"
           >
             <Plus size={20} />
             Add New
-          </motion.button>
+          </button>
         </div>
       </div>
 
@@ -822,7 +788,7 @@ const AdminDashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-xl p-6 border border-white/10 shadow-lg"
+              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 rounded-xl p-6 border border-white/10 shadow-lg"
             >
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                 <div className="flex items-center gap-4 flex-1">
@@ -853,22 +819,18 @@ const AdminDashboard = () => {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                  <button
                     onClick={() => openModal('edit', item)}
-                    className="p-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 hover:from-blue-500/30 hover:to-cyan-500/30 rounded-lg border border-blue-500/20"
+                    className="p-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 hover:from-blue-500/30 hover:to-cyan-500/30 rounded-lg border border-blue-500/20 transition-colors"
                   >
                     <Edit size={18} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                  </button>
+                  <button
                     onClick={() => handleDelete(item._id)}
-                    className="p-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20"
+                    className="p-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20 transition-colors"
                   >
                     <Trash2 size={18} />
-                  </motion.button>
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -885,12 +847,12 @@ const AdminDashboard = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 50 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 50 }}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
             className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10 shadow-2xl"
           >
             <div className="flex justify-between items-center mb-6">
@@ -921,7 +883,7 @@ const AdminDashboard = () => {
                           const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
                           setFormData({ ...formData, title, slug });
                         }}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                       />
                     </div>
@@ -932,7 +894,7 @@ const AdminDashboard = () => {
                         placeholder="Auto-generated from title"
                         value={formData.slug || ''}
                         onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       />
                     </div>
                     <div>
@@ -942,7 +904,7 @@ const AdminDashboard = () => {
                         placeholder="Brief summary"
                         value={formData.excerpt || ''}
                         onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                       />
                     </div>
@@ -978,7 +940,7 @@ const AdminDashboard = () => {
                         placeholder="Enter image URL"
                         value={formData.coverImage || ''}
                         onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                       />
                     </div>
@@ -989,7 +951,7 @@ const AdminDashboard = () => {
                         placeholder="Author name"
                         value={formData.author?.name || ''}
                         onChange={(e) => setFormData({ ...formData, author: { ...formData.author, name: e.target.value } })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       />
                     </div>
                     <div>
@@ -999,7 +961,7 @@ const AdminDashboard = () => {
                         placeholder="e.g., art, tutorial, drawing"
                         value={formData.tags ? formData.tags.join(', ') : ''}
                         onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()) })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       />
                     </div>
                   </>
@@ -1015,7 +977,7 @@ const AdminDashboard = () => {
                         placeholder="Course title"
                         value={formData.title || ''}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                       />
                     </div>
@@ -1025,7 +987,7 @@ const AdminDashboard = () => {
                         placeholder="Course description"
                         value={formData.description || ''}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         rows={4}
                         required
                       />
@@ -1037,7 +999,7 @@ const AdminDashboard = () => {
                         placeholder="Course price"
                         value={formData.price || ''}
                         onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                         min="0"
                         step="0.01"
@@ -1050,7 +1012,7 @@ const AdminDashboard = () => {
                         placeholder="e.g., 4 weeks"
                         value={formData.duration || ''}
                         onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                       />
                     </div>
@@ -1061,7 +1023,7 @@ const AdminDashboard = () => {
                         placeholder="e.g., Painting, Drawing"
                         value={formData.category || ''}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                       />
                     </div>
@@ -1070,7 +1032,7 @@ const AdminDashboard = () => {
                       <select
                         value={formData.level || 'beginner'}
                         onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       >
                         <option value="beginner" className="bg-gray-900">Beginner</option>
                         <option value="intermediate" className="bg-gray-900">Intermediate</option>
@@ -1084,7 +1046,7 @@ const AdminDashboard = () => {
                         placeholder="Course image URL"
                         value={formData.thumbnail || ''}
                         onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                       />
                     </div>
@@ -1095,7 +1057,7 @@ const AdminDashboard = () => {
                         placeholder="Instructor name"
                         value={formData.instructor?.name || ''}
                         onChange={(e) => setFormData({ ...formData, instructor: { ...formData.instructor, name: e.target.value } })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       />
                     </div>
                   </>
@@ -1111,7 +1073,7 @@ const AdminDashboard = () => {
                         placeholder="Paste artwork ID here"
                         value={formData.artwork || ''}
                         onChange={(e) => setFormData({ ...formData, artwork: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                       />
                     </div>
@@ -1122,7 +1084,7 @@ const AdminDashboard = () => {
                         placeholder="Item price"
                         value={formData.price || ''}
                         onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                         min="0"
                         step="0.01"
@@ -1135,7 +1097,7 @@ const AdminDashboard = () => {
                         placeholder="Available quantity"
                         value={formData.availableQuantity || ''}
                         onChange={(e) => setFormData({ ...formData, availableQuantity: parseInt(e.target.value) })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         required
                         min="0"
                       />
@@ -1153,7 +1115,7 @@ const AdminDashboard = () => {
                         placeholder="Artwork title"
                         value={formData.title || formData.name || ''}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value, name: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       />
                     </div>
                     <div>
@@ -1162,7 +1124,7 @@ const AdminDashboard = () => {
                         placeholder="Artwork description"
                         value={formData.description || ''}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         rows={4}
                       />
                     </div>
@@ -1173,7 +1135,7 @@ const AdminDashboard = () => {
                         placeholder="Image URL"
                         value={formData.imageUrl || formData.image || ''}
                         onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value, image: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-4 py-3 bg-white/5  border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       />
                     </div>
                   </>
@@ -1181,14 +1143,12 @@ const AdminDashboard = () => {
               </div>
 
               <div className="flex gap-4">
-                <motion.button
+                <button
                   type="submit"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
                   className="flex-1 px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:shadow-xl transition-shadow"
                 >
                   {modalMode === 'add' ? 'Create' : 'Update'}
-                </motion.button>
+                </button>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -1203,6 +1163,27 @@ const AdminDashboard = () => {
       )}
     </AnimatePresence>
   );
+
+  // Load items when tab changes
+  useEffect(() => {
+    loadItems();
+  }, [activeTab]);
+
+  // Show loading screen while auth is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-14 h-14 border-4 border-cyan-500 border-t-transparent rounded-full mx-auto mb-4"
+          />
+          <p className="text-white/70">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading && activeTab === 'dashboard') {
     return (
@@ -1260,7 +1241,7 @@ const AdminDashboard = () => {
       <motion.nav 
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-b border-white/10 px-6 py-4"
+        className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-gray-900/80 to-gray-800/80 border-b border-white/10 px-6 py-4"
       >
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -1285,20 +1266,17 @@ const AdminDashboard = () => {
               </div>
               <div className="h-6 w-px bg-white/20" />
               <motion.div
-                whileHover={{ scale: 1.1 }}
                 className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center cursor-pointer"
               >
                 <span className="font-bold">{user?.name?.charAt(0).toUpperCase()}</span>
               </motion.div>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
               className="p-2 hover:bg-white/10 rounded-lg"
             >
               <Settings size={20} />
-            </motion.button>
+            </button>
           </div>
         </div>
       </motion.nav>
@@ -1312,7 +1290,7 @@ const AdminDashboard = () => {
           className="flex flex-wrap gap-2 mb-8"
         >
           {tabs.map((tab, index) => (
-            <motion.button
+            <button
               key={tab.id}
               onClick={() => {
                 setActiveTab(tab.id);
@@ -1321,8 +1299,6 @@ const AdminDashboard = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               className={`flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all ${
                 activeTab === tab.id
                   ? `bg-gradient-to-r ${tab.color} text-white shadow-lg`
@@ -1331,7 +1307,7 @@ const AdminDashboard = () => {
             >
               {tab.icon}
               {tab.label}
-            </motion.button>
+            </button>
           ))}
         </motion.div>
 
@@ -1375,7 +1351,7 @@ const AdminDashboard = () => {
       <motion.div 
         initial={{ y: 100 }}
         animate={{ y: 0 }}
-        className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-900/90 to-gray-800/90 backdrop-blur-xl border-t border-white/10 px-6 py-3"
+        className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-900/90 to-gray-800/90 border-t border-white/10 px-6 py-3"
       >
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-sm">
           <div className="flex items-center gap-4">
