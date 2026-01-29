@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Eye, Heart, Share2, Calendar, Maximize } from 'lucide-react';
+import { Eye, Heart, Share2, Calendar, Maximize, Grid, List, Search } from 'lucide-react';
+import { fetchAllArtworks, fetchCategories } from '../services/api';
 
 const ArtworkCard = ({ artwork, viewMode }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -187,4 +188,136 @@ const ArtworkCard = ({ artwork, viewMode }) => {
   );
 };
 
-export default ArtworkCard;
+const Gallery = () => {
+  const [artworks, setArtworks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [viewMode, setViewMode] = useState('grid');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [artworksData, categoriesData] = await Promise.all([
+          fetchAllArtworks(),
+          fetchCategories()
+        ]);
+        setArtworks(artworksData || []);
+        setCategories(categoriesData || []);
+      } catch (err) {
+        setError('Failed to load artworks. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const filteredArtworks = useMemo(() => {
+    return artworks.filter((artwork) => {
+      const matchesCategory = selectedCategory === 'All' || artwork.category === selectedCategory;
+      const query = search.trim().toLowerCase();
+      const matchesSearch = !query ||
+        artwork.title?.toLowerCase().includes(query) ||
+        artwork.description?.toLowerCase().includes(query);
+      return matchesCategory && matchesSearch;
+    });
+  }, [artworks, selectedCategory, search]);
+
+  return (
+    <div className="min-h-screen py-12">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Gallery</h1>
+            <p className="text-gray-600">
+              Explore the full collection of artworks.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg border transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+              aria-label="Grid view"
+            >
+              <Grid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-lg border transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+              aria-label="List view"
+            >
+              <List size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-8">
+          <div className="relative flex-1">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search artworks..."
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">Category:</span>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="All">All</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-8 p-4 rounded-lg bg-red-50 text-red-600 border border-red-100">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}>
+            {[...Array(6)].map((_, index) => (
+              <div key={index} className="bg-gray-200 rounded-2xl h-80 animate-pulse" />
+            ))}
+          </div>
+        ) : filteredArtworks.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-500 text-lg">No artworks found.</p>
+          </div>
+        ) : (
+          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}>
+            {filteredArtworks.map((artwork) => (
+              <ArtworkCard key={artwork._id} artwork={artwork} viewMode={viewMode} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Gallery;
