@@ -52,14 +52,20 @@ exports.createPost = async (req, res) => {
   try {
     const postData = {
       ...req.body,
-      imageUrl: req.file ? req.file.path : null
+      coverImage: req.body.coverImage || (req.file ? req.file.path : null)
     };
+    
+    // Generate slug if not provided
+    if (!postData.slug && postData.title) {
+      postData.slug = postData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
     
     const post = new Blog(postData);
     const newPost = await post.save();
     res.status(201).json(newPost);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Blog creation error:', error);
+    res.status(400).json({ message: error.message, details: error.errors });
   }
 };
 
@@ -68,7 +74,8 @@ exports.updatePost = async (req, res) => {
   try {
     const updateData = {
       ...req.body,
-      ...(req.file && { imageUrl: req.file.path })
+      ...(req.file && { coverImage: req.file.path }),
+      ...(req.body.coverImage && { coverImage: req.body.coverImage })
     };
     
     const post = await Blog.findByIdAndUpdate(

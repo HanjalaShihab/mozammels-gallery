@@ -48,14 +48,15 @@ exports.createCourse = async (req, res) => {
   try {
     const courseData = {
       ...req.body,
-      imageUrl: req.file ? req.file.path : null
+      thumbnail: req.body.thumbnail || (req.file ? req.file.path : null)
     };
     
     const course = new Course(courseData);
     const newCourse = await course.save();
     res.status(201).json(newCourse);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Course creation error:', error);
+    res.status(400).json({ message: error.message, details: error.errors });
   }
 };
 
@@ -64,7 +65,8 @@ exports.updateCourse = async (req, res) => {
   try {
     const updateData = {
       ...req.body,
-      ...(req.file && { imageUrl: req.file.path })
+      ...(req.file && { thumbnail: req.file.path }),
+      ...(req.body.thumbnail && { thumbnail: req.body.thumbnail })
     };
     
     const course = await Course.findByIdAndUpdate(

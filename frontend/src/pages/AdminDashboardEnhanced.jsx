@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
   Palette, ShoppingBag, BookOpen, FileText, Plus, Edit, Trash2, 
-  Users, Mail, BarChart, Shield, UserX, CheckCircle, XCircle
+  Users, Mail, BarChart, Shield, UserX, CheckCircle, XCircle,
+  Settings, Database, Server, Globe, Cpu, Zap, Activity,
+  Eye, EyeOff, Filter, Search, Download, Upload,
+  Lock, Unlock, ShieldCheck, AlertTriangle, Star, TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -29,6 +32,12 @@ const AdminDashboard = () => {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [contacts, setContacts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  
+  const containerRef = useRef(null);
+  const statsRef = useRef([]);
 
   // Redirect if not admin
   useEffect(() => {
@@ -38,13 +47,48 @@ const AdminDashboard = () => {
   }, [user, navigate]);
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: <BarChart size={20} /> },
-    { id: 'artworks', label: 'Artworks', icon: <Palette size={20} /> },
-    { id: 'shop', label: 'Shop Items', icon: <ShoppingBag size={20} /> },
-    { id: 'courses', label: 'Courses', icon: <BookOpen size={20} /> },
-    { id: 'blogs', label: 'Blogs', icon: <FileText size={20} /> },
-    { id: 'users', label: 'Users', icon: <Users size={20} /> },
-    { id: 'contacts', label: 'Contacts', icon: <Mail size={20} /> },
+    { 
+      id: 'dashboard', 
+      label: 'Dashboard', 
+      icon: <BarChart size={20} />,
+      color: 'from-blue-500 to-cyan-500'
+    },
+    { 
+      id: 'artworks', 
+      label: 'Artworks', 
+      icon: <Palette size={20} />,
+      color: 'from-purple-500 to-pink-500'
+    },
+    { 
+      id: 'shop', 
+      label: 'Shop', 
+      icon: <ShoppingBag size={20} />,
+      color: 'from-emerald-500 to-green-500'
+    },
+    { 
+      id: 'courses', 
+      label: 'Courses', 
+      icon: <BookOpen size={20} />,
+      color: 'from-orange-500 to-yellow-500'
+    },
+    { 
+      id: 'blogs', 
+      label: 'Blogs', 
+      icon: <FileText size={20} />,
+      color: 'from-rose-500 to-red-500'
+    },
+    { 
+      id: 'users', 
+      label: 'Users', 
+      icon: <Users size={20} />,
+      color: 'from-indigo-500 to-blue-500'
+    },
+    { 
+      id: 'contacts', 
+      label: 'Contacts', 
+      icon: <Mail size={20} />,
+      color: 'from-teal-500 to-cyan-500'
+    },
   ];
 
   useEffect(() => {
@@ -178,99 +222,358 @@ const AdminDashboard = () => {
       setShowModal(false);
       setFormData({});
       loadItems();
+      alert('Item saved successfully!');
     } catch (error) {
-      alert('Error saving item: ' + error.message);
+      console.error('Form submission error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      alert('Error saving item: ' + errorMessage);
     }
   };
 
-  const renderDashboard = () => (
-    <div className="space-y-8">
-      <h2 className="text-3xl font-bold">Dashboard Overview</h2>
-      
-      {dashboardStats && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard title="Users" value={dashboardStats.stats.users} icon={<Users />} color="blue" />
-            <StatCard title="Artworks" value={dashboardStats.stats.artworks} icon={<Palette />} color="purple" />
-            <StatCard title="Shop Items" value={dashboardStats.stats.shopItems} icon={<ShoppingBag />} color="green" />
-            <StatCard title="Courses" value={dashboardStats.stats.courses} icon={<BookOpen />} color="orange" />
-            <StatCard title="Blogs" value={dashboardStats.stats.blogs} icon={<FileText />} color="pink" />
-            <StatCard title="Contacts" value={dashboardStats.stats.contacts} icon={<Mail />} color="indigo" />
-          </div>
+  // Filter items based on search term
+  const filteredItems = items.filter(item => 
+    (item.title || item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-xl font-bold mb-4">Recent Users</h3>
-              <div className="space-y-3">
-                {dashboardStats.recentUsers?.map((user) => (
-                  <div key={user._id} className="flex justify-between items-center border-b pb-2">
-                    <div>
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-gray-600">{user.email}</p>
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contact.subject.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const statsVariants = {
+    hidden: { scale: 0, rotate: -180 },
+    visible: { 
+      scale: 1, 
+      rotate: 0,
+      transition: { type: "spring", stiffness: 200, damping: 20 }
+    }
+  };
+
+  // Interactive Card Component
+  const InteractiveCard = ({ children, className = '', onClick }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const [rotation, setRotation] = useState({ x: 0, y: 0 });
+
+    return (
+      <motion.div
+        className={`relative perspective-1000 ${className}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          setRotation({ x: 0, y: 0 });
+        }}
+        onMouseMove={(e) => {
+          if (!isHovered) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width - 0.5;
+          const y = (e.clientY - rect.top) / rect.height - 0.5;
+          setRotation({ x: -y * 5, y: x * 5 });
+        }}
+        animate={{
+          rotateX: rotation.x,
+          rotateY: rotation.y,
+          scale: isHovered ? 1.02 : 1
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        style={{ transformStyle: 'preserve-3d' }}
+        onClick={onClick}
+      >
+        {children}
+      </motion.div>
+    );
+  };
+
+  const renderDashboard = () => (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-8"
+    >
+      {/* Real-time Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {dashboardStats && Object.entries(dashboardStats.stats).map(([key, value], index) => {
+          const statConfig = {
+            users: { icon: <Users />, label: 'Total Users', color: 'from-indigo-500 to-blue-500' },
+            artworks: { icon: <Palette />, label: 'Artworks', color: 'from-purple-500 to-pink-500' },
+            shopItems: { icon: <ShoppingBag />, label: 'Shop Items', color: 'from-emerald-500 to-green-500' },
+            courses: { icon: <BookOpen />, label: 'Courses', color: 'from-orange-500 to-yellow-500' },
+            blogs: { icon: <FileText />, label: 'Blog Posts', color: 'from-rose-500 to-red-500' },
+            contacts: { icon: <Mail />, label: 'Messages', color: 'from-teal-500 to-cyan-500' }
+          }[key];
+
+          if (!statConfig) return null;
+
+          return (
+            <motion.div
+              key={key}
+              variants={statsVariants}
+              ref={el => statsRef.current[index] = el}
+              className="relative"
+            >
+              <InteractiveCard>
+                <div className={`p-6 rounded-2xl bg-gradient-to-br ${statConfig.color} text-white overflow-hidden`}>
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-6 -mt-6" />
+                  <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <p className="text-white/80 text-sm">{statConfig.label}</p>
+                        <p className="text-3xl font-bold mt-2">{value || 0}</p>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                        className="p-3 bg-white/20 rounded-xl"
+                      >
+                        {statConfig.icon}
+                      </motion.div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs ${
-                      user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.role}
+                    <motion.div
+                      className="h-1 bg-white/30 rounded-full overflow-hidden"
+                      initial={{ width: 0 }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 1, delay: index * 0.1 }}
+                    >
+                      <motion.div
+                        className="h-full bg-white rounded-full"
+                        animate={{ x: ['-100%', '100%'] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                    </motion.div>
+                  </div>
+                </div>
+              </InteractiveCard>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Users */}
+        <InteractiveCard>
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                <Users className="text-blue-400" />
+                Recent Users
+                <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs">
+                  {dashboardStats?.recentUsers?.length || 0} new
+                </span>
+              </h3>
+              <Activity className="text-cyan-400 animate-pulse" />
+            </div>
+            <div className="space-y-4">
+              {dashboardStats?.recentUsers?.slice(0, 5).map((user, index) => (
+                <motion.div
+                  key={user._id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                      <span className="font-bold text-white">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">{user.name}</p>
+                      <p className="text-sm text-white/60">{user.email}</p>
+                    </div>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    user.role === 'admin' 
+                      ? 'bg-red-500/20 text-red-400' 
+                      : 'bg-green-500/20 text-green-400'
+                  }`}>
+                    {user.role}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </InteractiveCard>
+
+        {/* Recent Contacts */}
+        <InteractiveCard>
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                <Mail className="text-cyan-400" />
+                Recent Messages
+                <span className="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-full text-xs">
+                  {dashboardStats?.recentContacts?.length || 0} unread
+                </span>
+              </h3>
+              <AlertTriangle className="text-yellow-400 animate-pulse" />
+            </div>
+            <div className="space-y-4">
+              {dashboardStats?.recentContacts?.slice(0, 5).map((contact, index) => (
+                <motion.div
+                  key={contact._id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-medium text-white">{contact.name}</p>
+                      <p className="text-sm text-white/60">{contact.email}</p>
+                    </div>
+                    <span className="text-xs text-white/40">
+                      {new Date(contact.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-xl font-bold mb-4">Recent Contacts</h3>
-              <div className="space-y-3">
-                {dashboardStats.recentContacts?.map((contact) => (
-                  <div key={contact._id} className="border-b pb-2">
-                    <p className="font-medium">{contact.name}</p>
-                    <p className="text-sm text-gray-600">{contact.email}</p>
-                    <p className="text-xs text-gray-500">{contact.subject}</p>
-                  </div>
-                ))}
-              </div>
+                  <p className="text-sm text-white/80 truncate">{contact.subject}</p>
+                  <p className="text-xs text-white/60 mt-1 line-clamp-2">{contact.message}</p>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </>
-      )}
-    </div>
+        </InteractiveCard>
+      </div>
+
+      {/* System Status */}
+      <InteractiveCard>
+        <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+              <Server className="text-green-400" />
+              System Status
+            </h3>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-green-400 text-sm">All Systems Operational</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'Database', value: '100%', color: 'from-blue-500 to-cyan-500', icon: <Database /> },
+              { label: 'API Server', value: '99.9%', color: 'from-purple-500 to-pink-500', icon: <Server /> },
+              { label: 'Storage', value: '85%', color: 'from-emerald-500 to-green-500', icon: <Cpu /> },
+              { label: 'Network', value: '100%', color: 'from-orange-500 to-yellow-500', icon: <Globe /> }
+            ].map((service, index) => (
+              <motion.div
+                key={service.label}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+                className={`p-4 rounded-xl bg-gradient-to-br ${service.color} text-center`}
+              >
+                <div className="text-white/80 text-sm mb-2">{service.label}</div>
+                <div className="text-2xl font-bold text-white mb-2">{service.value}</div>
+                <div className="text-white/60">{service.icon}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </InteractiveCard>
+    </motion.div>
   );
 
   const renderUsers = () => (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold">User Management</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-white">User Management</h2>
+          <p className="text-white/60">Manage user accounts and permissions</p>
+        </div>
+        <div className="flex gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" size={20} />
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+          <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:shadow-lg transition-shadow">
+            <Filter size={20} />
+          </button>
+        </div>
+      </div>
+
       <div className="grid gap-4">
-        {users.map((user) => (
-          <motion.div
-            key={user._id}
-            className="bg-white p-6 rounded-lg shadow flex justify-between items-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold">{user.name}</h3>
-              <p className="text-gray-600">{user.email}</p>
-              <p className="text-sm text-gray-500">
-                Joined: {new Date(user.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <select
-                value={user.role}
-                onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-              <button
-                onClick={() => handleDelete(user._id)}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-              >
-                <Trash2 size={20} />
-              </button>
-            </div>
-          </motion.div>
+        {filteredUsers.map((user, index) => (
+          <InteractiveCard key={user._id}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-xl p-6 border border-white/10 shadow-lg"
+            >
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="relative">
+                    <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    {user.role === 'admin' && (
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center border-2 border-gray-900">
+                        <Shield size={12} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white">{user.name}</h3>
+                    <p className="text-white/60">{user.email}</p>
+                    <p className="text-sm text-white/40 mt-1">
+                      Joined: {new Date(user.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user._id, e.target.value)}
+                    className="px-4 py-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                  >
+                    <option value="user" className="bg-gray-900">User</option>
+                    <option value="admin" className="bg-gray-900">Admin</option>
+                  </select>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleDelete(user._id)}
+                    className="p-2 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20"
+                  >
+                    <Trash2 size={20} />
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </InteractiveCard>
         ))}
       </div>
     </div>
@@ -278,33 +581,72 @@ const AdminDashboard = () => {
 
   const renderContacts = () => (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold">Contact Messages</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-white">Contact Messages</h2>
+          <p className="text-white/60">Manage and respond to user inquiries</p>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" size={20} />
+          <input
+            type="text"
+            placeholder="Search messages..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
+          />
+        </div>
+      </div>
+
       <div className="grid gap-4">
-        {contacts.map((contact) => (
-          <motion.div
-            key={contact._id}
-            className="bg-white p-6 rounded-lg shadow"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">{contact.name}</h3>
-                <p className="text-gray-600">{contact.email}</p>
-                <p className="text-sm font-medium text-gray-800 mt-2">{contact.subject}</p>
-                <p className="text-gray-700 mt-2">{contact.message}</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  {new Date(contact.createdAt).toLocaleString()}
-                </p>
+        {filteredContacts.map((contact, index) => (
+          <InteractiveCard key={contact._id}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-xl p-6 border border-white/10 shadow-lg"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                    <Mail className="text-white" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">{contact.name}</h3>
+                    <p className="text-white/60">{contact.email}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <span className="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-full text-xs">
+                    {new Date(contact.createdAt).toLocaleDateString()}
+                  </span>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleDelete(contact._id)}
+                    className="p-2 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20"
+                  >
+                    <Trash2 size={20} />
+                  </motion.button>
+                </div>
               </div>
-              <button
-                onClick={() => handleDelete(contact._id)}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-              >
-                <Trash2 size={20} />
-              </button>
-            </div>
-          </motion.div>
+              <div className="space-y-3">
+                <div className="p-4 bg-white/5 rounded-lg">
+                  <p className="text-white/80 font-medium mb-2">{contact.subject}</p>
+                  <p className="text-white/60 text-sm">{contact.message}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:shadow-lg transition-shadow text-sm">
+                    Mark as Read
+                  </button>
+                  <button className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition-shadow text-sm">
+                    Reply
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </InteractiveCard>
         ))}
       </div>
     </div>
@@ -312,191 +654,600 @@ const AdminDashboard = () => {
 
   const renderContentManagement = () => (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold capitalize">{activeTab}</h2>
-        <button
-          onClick={() => openModal('add')}
-          className="flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700"
-        >
-          <Plus size={20} />
-          Add New
-        </button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-white capitalize">{activeTab}</h2>
+          <p className="text-white/60">Manage your {activeTab} content</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" size={20} />
+            <input
+              type="text"
+              placeholder={`Search ${activeTab}...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => openModal('add')}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:shadow-xl transition-shadow"
+          >
+            <Plus size={20} />
+            Add New
+          </motion.button>
+        </div>
       </div>
 
       <div className="grid gap-4">
-        {items.map((item) => (
-          <motion.div
-            key={item._id}
-            className="bg-white p-6 rounded-lg shadow flex justify-between items-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold">{item.title || item.name}</h3>
-              {item.description && (
-                <p className="text-gray-600 line-clamp-2">{item.description}</p>
-              )}
-              {item.price && (
-                <p className="text-primary-600 font-semibold mt-2">${item.price}</p>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => openModal('edit', item)}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-              >
-                <Edit size={20} />
-              </button>
-              <button
-                onClick={() => handleDelete(item._id)}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-              >
-                <Trash2 size={20} />
-              </button>
-            </div>
-          </motion.div>
+        {filteredItems.map((item, index) => (
+          <InteractiveCard key={item._id}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl rounded-xl p-6 border border-white/10 shadow-lg"
+            >
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="w-20 h-20 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500/20 to-pink-500/20">
+                    {(item.imageUrl || item.image) && (
+                      <img
+                        src={item.imageUrl || item.image}
+                        alt={item.title || item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white">{item.title || item.name}</h3>
+                    {item.description && (
+                      <p className="text-white/60 text-sm mt-1 line-clamp-2">{item.description}</p>
+                    )}
+                    <div className="flex items-center gap-4 mt-3">
+                      {item.price && (
+                        <span className="px-3 py-1 bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-emerald-400 rounded-full text-sm">
+                          ${item.price}
+                        </span>
+                      )}
+                      <span className="text-xs text-white/40">
+                        ID: {item._id.substring(0, 8)}...
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => openModal('edit', item)}
+                    className="p-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 hover:from-blue-500/30 hover:to-cyan-500/30 rounded-lg border border-blue-500/20"
+                  >
+                    <Edit size={18} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleDelete(item._id)}
+                    className="p-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/20"
+                  >
+                    <Trash2 size={18} />
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </InteractiveCard>
         ))}
       </div>
     </div>
   );
 
   const renderModal = () => (
-    showModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <AnimatePresence>
+      {showModal && (
         <motion.div
-          className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-50 p-4"
         >
-          <h3 className="text-2xl font-bold mb-6">
-            {modalMode === 'add' ? 'Add New' : 'Edit'} {activeTab.slice(0, -1)}
-          </h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Title/Name"
-              value={formData.title || formData.name || ''}
-              onChange={(e) => setFormData({ ...formData, [activeTab === 'artworks' || activeTab === 'shop' ? 'name' : 'title']: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              required
-            />
-            <textarea
-              placeholder="Description"
-              value={formData.description || ''}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              rows={4}
-              required
-            />
-            <input
-              type="text"
-              placeholder="Image URL"
-              value={formData.imageUrl || formData.image || ''}
-              onChange={(e) => setFormData({ ...formData, [activeTab === 'shop' ? 'imageUrl' : 'image']: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              required
-            />
-            {(activeTab === 'shop' || activeTab === 'courses') && (
-              <input
-                type="number"
-                placeholder="Price"
-                value={formData.price || ''}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                required
-              />
-            )}
-            <div className="flex gap-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 50 }}
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10 shadow-2xl"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-white">
+                {modalMode === 'add' ? 'Add New' : 'Edit'} {activeTab.slice(0, -1)}
+              </h3>
               <button
-                type="submit"
-                className="flex-1 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700"
-              >
-                {modalMode === 'add' ? 'Create' : 'Update'}
-              </button>
-              <button
-                type="button"
                 onClick={() => setShowModal(false)}
-                className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300"
+                className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
               >
-                Cancel
+                <XCircle size={24} />
               </button>
             </div>
-          </form>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-4">
+                {/* BLOGS */}
+                {activeTab === 'blogs' && (
+                  <>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Title *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter blog title"
+                        value={formData.title || ''}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Slug (URL friendly) *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., my-blog-post"
+                        value={formData.slug || ''}
+                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Excerpt *</label>
+                      <input
+                        type="text"
+                        placeholder="Brief summary"
+                        value={formData.excerpt || ''}
+                        onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Content *</label>
+                      <textarea
+                        placeholder="Full blog content"
+                        value={formData.content || ''}
+                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        rows={6}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Cover Image URL *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter image URL"
+                        value={formData.coverImage || ''}
+                        onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Author Name</label>
+                      <input
+                        type="text"
+                        placeholder="Author name"
+                        value={formData.author?.name || ''}
+                        onChange={(e) => setFormData({ ...formData, author: { ...formData.author, name: e.target.value } })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Tags (comma separated)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., art, tutorial, drawing"
+                        value={formData.tags ? formData.tags.join(', ') : ''}
+                        onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()) })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* COURSES */}
+                {activeTab === 'courses' && (
+                  <>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Title *</label>
+                      <input
+                        type="text"
+                        placeholder="Course title"
+                        value={formData.title || ''}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Description *</label>
+                      <textarea
+                        placeholder="Course description"
+                        value={formData.description || ''}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        rows={4}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Price ($) *</label>
+                      <input
+                        type="number"
+                        placeholder="Course price"
+                        value={formData.price || ''}
+                        onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Duration *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., 4 weeks"
+                        value={formData.duration || ''}
+                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Category *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Painting, Drawing"
+                        value={formData.category || ''}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Level</label>
+                      <select
+                        value={formData.level || 'beginner'}
+                        onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      >
+                        <option value="beginner" className="bg-gray-900">Beginner</option>
+                        <option value="intermediate" className="bg-gray-900">Intermediate</option>
+                        <option value="advanced" className="bg-gray-900">Advanced</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Thumbnail Image URL *</label>
+                      <input
+                        type="text"
+                        placeholder="Course image URL"
+                        value={formData.thumbnail || ''}
+                        onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Instructor Name</label>
+                      <input
+                        type="text"
+                        placeholder="Instructor name"
+                        value={formData.instructor?.name || ''}
+                        onChange={(e) => setFormData({ ...formData, instructor: { ...formData.instructor, name: e.target.value } })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* SHOP ITEMS */}
+                {activeTab === 'shop' && (
+                  <>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Artwork ID (from Artwork) *</label>
+                      <input
+                        type="text"
+                        placeholder="Paste artwork ID here"
+                        value={formData.artwork || ''}
+                        onChange={(e) => setFormData({ ...formData, artwork: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Price ($) *</label>
+                      <input
+                        type="number"
+                        placeholder="Item price"
+                        value={formData.price || ''}
+                        onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Available Quantity *</label>
+                      <input
+                        type="number"
+                        placeholder="Available quantity"
+                        value={formData.availableQuantity || ''}
+                        onChange={(e) => setFormData({ ...formData, availableQuantity: parseInt(e.target.value) })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        required
+                        min="0"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* ARTWORKS */}
+                {activeTab === 'artworks' && (
+                  <>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Title</label>
+                      <input
+                        type="text"
+                        placeholder="Artwork title"
+                        value={formData.title || formData.name || ''}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value, name: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Description</label>
+                      <textarea
+                        placeholder="Artwork description"
+                        value={formData.description || ''}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        rows={4}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Image URL</label>
+                      <input
+                        type="text"
+                        placeholder="Image URL"
+                        value={formData.imageUrl || formData.image || ''}
+                        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value, image: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="flex gap-4">
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:shadow-xl transition-shadow"
+                >
+                  {modalMode === 'add' ? 'Create' : 'Update'}
+                </motion.button>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-6 py-4 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </motion.div>
         </motion.div>
-      </div>
-    )
+      )}
+    </AnimatePresence>
   );
 
   if (loading && activeTab === 'dashboard') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-20 h-20 border-4 border-cyan-500 border-t-transparent rounded-full mx-auto mb-4"
+          />
+          <p className="text-white/60">Loading dashboard data...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user?.name}!</p>
-        </div>
+    <div 
+      ref={containerRef}
+      className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-black text-white"
+    >
+      {/* Floating Particles */}
+      <div className="fixed inset-0 pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full"
+            initial={{
+              x: Math.random() * 100 + 'vw',
+              y: Math.random() * 100 + 'vh',
+              scale: 0
+            }}
+            animate={{
+              x: Math.random() * 100 + 'vw',
+              y: Math.random() * 100 + 'vh',
+              scale: [0, 1, 0],
+              rotate: 360
+            }}
+            transition={{
+              duration: 20 + i * 5,
+              repeat: Infinity,
+              delay: i * 1.5
+            }}
+            style={{
+              width: `${Math.random() * 4 + 1}px`,
+              height: `${Math.random() * 4 + 1}px`,
+              background: `hsl(${200 + i * 10}, 100%, 70%)`,
+              opacity: 0.3
+            }}
+          />
+        ))}
+      </div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {tabs.map((tab) => (
-            <button
+      {/* Top Navigation */}
+      <motion.nav 
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-b border-white/10 px-6 py-4"
+      >
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="w-10 h-10 rounded-full border-2 border-cyan-500 border-t-transparent"
+              />
+              <div>
+                <h1 className="text-xl font-bold">Admin Control Center</h1>
+                <p className="text-sm text-white/60">Welcome back, {user?.name}!</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-sm text-green-400">System Active</span>
+              </div>
+              <div className="h-6 w-px bg-white/20" />
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center cursor-pointer"
+              >
+                <span className="font-bold">{user?.name?.charAt(0).toUpperCase()}</span>
+              </motion.div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="p-2 hover:bg-white/10 rounded-lg"
+            >
+              <Settings size={20} />
+            </motion.button>
+          </div>
+        </div>
+      </motion.nav>
+
+      {/* Main Content */}
+      <div className="pt-20 px-4 sm:px-6 lg:px-8 pb-8 max-w-7xl mx-auto">
+        {/* Tabs Navigation */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-wrap gap-2 mb-8"
+        >
+          {tabs.map((tab, index) => (
+            <motion.button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition ${
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSearchTerm('');
+              }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  ? `bg-gradient-to-r ${tab.color} text-white shadow-lg`
+                  : 'bg-white/10 text-white/80 hover:bg-white/20'
               }`}
             >
               {tab.icon}
               {tab.label}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
 
-        {/* Content */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-          </div>
-        ) : (
-          <>
-            {activeTab === 'dashboard' && renderDashboard()}
-            {activeTab === 'users' && renderUsers()}
-            {activeTab === 'contacts' && renderContacts()}
-            {['artworks', 'shop', 'courses', 'blogs'].includes(activeTab) && renderContentManagement()}
-          </>
-        )}
-
-        {renderModal()}
+        {/* Content Area */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="min-h-[calc(100vh-200px)]"
+          >
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="text-center">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full mx-auto mb-4"
+                  />
+                  <p className="text-white/60">Loading {activeTab}...</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {activeTab === 'dashboard' && renderDashboard()}
+                {activeTab === 'users' && renderUsers()}
+                {activeTab === 'contacts' && renderContacts()}
+                {['artworks', 'shop', 'courses', 'blogs'].includes(activeTab) && renderContentManagement()}
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
+
+      {renderModal()}
+
+      {/* Bottom Status Bar */}
+      <motion.div 
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-900/90 to-gray-800/90 backdrop-blur-xl border-t border-white/10 px-6 py-3"
+      >
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-sm">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Cpu size={14} className="text-cyan-400" />
+              <span className="text-white/60">CPU: 12%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Database size={14} className="text-emerald-400" />
+              <span className="text-white/60">Memory: 45%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Server size={14} className="text-purple-400" />
+              <span className="text-white/60">Uptime: 99.9%</span>
+            </div>
+          </div>
+          <div className="text-white/40">
+            Last Updated: {new Date().toLocaleTimeString()}
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };
-
-const StatCard = ({ title, value, icon, color }) => (
-  <motion.div
-    className="bg-white p-6 rounded-lg shadow"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-  >
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-600 text-sm">{title}</p>
-        <p className="text-3xl font-bold mt-2">{value || 0}</p>
-      </div>
-      <div className={`p-4 bg-${color}-100 text-${color}-600 rounded-full`}>
-        {icon}
-      </div>
-    </div>
-  </motion.div>
-);
 
 export default AdminDashboard;

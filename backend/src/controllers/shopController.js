@@ -53,15 +53,15 @@ exports.getItem = async (req, res) => {
 exports.createItem = async (req, res) => {
   try {
     const itemData = {
-      ...req.body,
-      imageUrl: req.file ? req.file.path : null
+      ...req.body
     };
     
     const item = new ShopItem(itemData);
     const newItem = await item.save();
     res.status(201).json(newItem);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Shop item creation error:', error);
+    res.status(400).json({ message: error.message, details: error.errors });
   }
 };
 

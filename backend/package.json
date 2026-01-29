@@ -4,7 +4,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon --ignore .env --ignore node_modules src/server.js"
+    "dev": "nodemon --ignore .env --ignore node_modules src/server.js",
+    "seed": "node src/scripts/seedDatabase.js"
   },
   "dependencies": {
     "express": "^4.18.2",
