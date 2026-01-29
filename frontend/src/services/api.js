@@ -155,6 +155,11 @@ export const fetchBlogs = async () => {
   return response.data;
 };
 
+export const fetchBlogById = async (id) => {
+  const response = await api.get(`/blogs/${id}`);
+  return response.data;
+};
+
 export const createBlog = async (data) => {
   const response = await api.post('/blogs', data);
   return response.data;

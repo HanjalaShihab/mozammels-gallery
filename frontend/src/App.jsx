@@ -9,6 +9,7 @@ import Gallery from './pages/Gallery';
 import Shop from './pages/Shop';
 import Courses from './pages/Courses';
 import Blog from './pages/Blog';
+import BlogDetail from './pages/BlogDetail';
 import Contact from './pages/Contact';
 import About from './pages/About';
 import Login from './pages/Login';
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:id" element={<BlogDetail />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/login" element={<Login />} />
