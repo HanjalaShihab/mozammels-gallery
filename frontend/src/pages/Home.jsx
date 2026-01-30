@@ -502,8 +502,8 @@ const Home = () => {
               className="space-y-6"
             >
               <div>
-                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                  About <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">Mozammel</span>
+                <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                  <span className='text-blue-600'>About</span> <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">Mozammel</span>
                 </h2>
                 <p className="text-lg text-gray-600 leading-relaxed">
                   Welcome to my artistic world! I'm Mozammel, a passionate digital artist with over 10 years 

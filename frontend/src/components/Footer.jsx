@@ -109,7 +109,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center text-sm">
             <p>© {currentYear} Mozammel's Gallery. All rights reserved.</p>
             <p className="flex items-center gap-1 mt-2 md:mt-0">
-              Made with <Heart size={16} className="text-red-500 fill-current" /> by Mozammel
+              Made with <Heart size={16} className="text-red-500 fill-current" /> by Hanjala
             </p>
           </div>
         </div>
