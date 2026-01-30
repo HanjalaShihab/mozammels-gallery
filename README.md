@@ -1,6 +1,6 @@
 # Mozammel's Gallery - Artist Portfolio
 
-A full-stack artist portfolio application with gallery, shop, courses, and blog functionality.
+This is a full-stack artist portfolio application with gallery, shop, courses, and blog functionality.
 
 ## Features
 
