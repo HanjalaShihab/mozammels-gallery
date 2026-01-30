@@ -35,8 +35,13 @@ const ArtworkGrid = ({ artworks, loading }) => {
           <Link to={`/gallery/${artwork._id}`}>
             <div className="relative overflow-hidden aspect-[4/5]">
               <img
-                src={artwork.imageUrl}
+                src={artwork.imageUrl || artwork.image || 'https://via.placeholder.com/400x500/eee?text=Artwork'}
                 alt={artwork.title}
+                onLoad={(e) => e.target.setAttribute('loaded', '')}
+                onError={(e) => {
+                  e.currentTarget.src = 'https://via.placeholder.com/400x500/eee?text=Artwork';
+                  e.currentTarget.setAttribute('loaded', '');
+                }}
                 className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
