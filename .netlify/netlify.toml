@@ -7,7 +7,7 @@ headers = []
 [functions."*"]
 
 [build]
-publish = "/home/hanjala/Documents/mozammels-gallary/dist"
+publish = "/home/hanjala/Documents/mozammels-gallary/frontend/dist"
 publishOrigin = "config"
 commandOrigin = "config"
 command = "npm run build"

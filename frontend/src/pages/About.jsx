@@ -35,8 +35,8 @@ const About = () => {
             transition={{ delay: 0.2 }}
           >
             <img
-              src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80"
-              alt="Artist at work"
+              src={`${import.meta.env.BASE_URL}uncle.jpg`}
+              alt="Mozammel"
               className="rounded-xl shadow-2xl w-full h-auto"
             />
           </motion.div>
