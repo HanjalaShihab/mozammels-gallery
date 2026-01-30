@@ -9,6 +9,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [activeHover, setActiveHover] = useState(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileGalleryOpen, setMobileGalleryOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
@@ -444,10 +445,9 @@ const Navbar = () => {
                   >
                     {item.path === '/gallery' ? (
                       <div className="space-y-2">
-                        <Link
-                          to={item.path}
-                          onClick={() => setIsOpen(false)}
-                          className={`flex items-center justify-between gap-3 px-5 py-4 rounded-2xl transition-all duration-300 group ${
+                        <button
+                          onClick={() => setMobileGalleryOpen(!mobileGalleryOpen)}
+                          className={`w-full flex items-center justify-between gap-3 px-5 py-4 rounded-2xl transition-all duration-300 group ${
                             location.pathname === item.path
                               ? 'bg-gradient-to-r from-primary-500/20 to-secondary-500/20 border border-primary-500/30 text-white'
                               : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50 hover:text-white'
@@ -461,20 +461,40 @@ const Navbar = () => {
                             </span>
                             <span className="font-medium">{item.label}</span>
                           </div>
-                          <ChevronDown className="text-gray-400" size={16} />
-                        </Link>
-                        <div className="pl-6 space-y-2">
-                          {galleryCategories.map((category) => (
-                            <Link
-                              key={category.value}
-                              to={getGalleryLink(category.value)}
-                              onClick={() => setIsOpen(false)}
-                              className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-800/40 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-300"
+                          <motion.div
+                            animate={{ rotate: mobileGalleryOpen ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <ChevronDown className="text-gray-400" size={16} />
+                          </motion.div>
+                        </button>
+                        <AnimatePresence>
+                          {mobileGalleryOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden pl-6 space-y-2"
                             >
-                              <span className="text-sm font-medium">{category.label}</span>
-                              <Sparkles className="text-primary-400" size={14} />
-                            </Link>
-                          ))}
+                              {galleryCategories.map((category) => (
+                                <Link
+                                  key={category.value}
+                                  to={getGalleryLink(category.value)}
+                                  onClick={() => {
+                                    setIsOpen(false);
+                                    setMobileGalleryOpen(false);
+                                  }}
+                                  className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-800/40 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-300"
+                                >
+                                  <span className="text-sm font-medium">{category.label}</span>
+                                  <Sparkles className="text-primary-400" size={14} />
+                                </Link>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                         </div>
                       </div>
                     ) : (
